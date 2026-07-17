@@ -25,5 +25,10 @@
     "react-dom": "^19.2.7",
     "sanity": "^6.5.0",
     "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "@types/node": "^26.1.1",
+    "typescript": "^6.0.3"
   }
 }
