@@ -71,8 +71,9 @@ export const listing = defineType({
       description: 'Free text for now — will become a reference later.',
     }),
 
-    // Extensible key/value metadata: any listing type can add custom attributes
-    // here (e.g. Odometer, Year, Condition, Bedrooms) without schema changes.
+    // Extensible key/value metadata. Supports text, number, boolean and date types
+    // so values can be sorted/filtered (e.g. odometer, bedrooms, land size) while
+    // remaining flexible enough to work across verticals like automotive and real estate.
     defineField({
       name: 'details',
       title: 'Details',
@@ -91,10 +92,47 @@ export const listing = defineType({
             }),
             defineField({
               name: 'value',
-              title: 'Value',
+              title: 'Value (display)',
               type: 'string',
-              description: 'e.g. "142,000 km", "2019", "Good", "3".',
-              validation: (Rule) => Rule.required(),
+              description:
+                'Human-readable display override, e.g. "142,000 km", "2019", "Good". ' +
+                'For number values this can be derived from Value (number) + Unit, but an ' +
+                'explicit value allows custom formatting.',
+            }),
+            defineField({
+              name: 'valueType',
+              title: 'Value type',
+              type: 'string',
+              description: 'How the value should be interpreted (drives sorting/filtering).',
+              options: { list: ['text', 'number', 'boolean', 'date'], layout: 'radio' },
+              initialValue: 'text',
+            }),
+            defineField({
+              name: 'valueNumber',
+              title: 'Value (number)',
+              type: 'number',
+              description:
+                'Used when Value type is "number" (e.g. odometer 142000, bedrooms 3, ' +
+                'year 2019). Kept separate from the display value for sorting and filtering.',
+            }),
+            defineField({
+              name: 'unit',
+              title: 'Unit',
+              type: 'string',
+              description:
+                'Optional display unit for number values (e.g. "km", "miles", "sqm", "acres").',
+            }),
+            defineField({
+              name: 'valueBoolean',
+              title: 'Value (boolean)',
+              type: 'boolean',
+              description: 'Used when Value type is "boolean" (e.g. "Has Pool", "Pet Friendly").',
+            }),
+            defineField({
+              name: 'valueDate',
+              title: 'Value (date)',
+              type: 'string',
+              description: 'ISO date string, used when Value type is "date".',
             }),
           ],
           preview: {
