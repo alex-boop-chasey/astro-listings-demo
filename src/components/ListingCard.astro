@@ -68,7 +68,10 @@ const status = statusConfig[listing.status] ?? statusConfig.draft;
     {/* SOLD banner */}
     {
       listing.status === 'sold' && (
-        <div class="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-12 bg-red-600/95 px-16 py-1.5 text-center text-lg font-extrabold uppercase tracking-[0.3em] text-white shadow-lg">
+        <div
+          aria-hidden="true"
+          class="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-12 bg-red-600/95 px-16 py-1.5 text-center text-lg font-extrabold uppercase tracking-[0.3em] text-white shadow-lg"
+        >
           Sold
         </div>
       )
@@ -110,7 +113,10 @@ const status = statusConfig[listing.status] ?? statusConfig.draft;
         {categoryLabel || 'Listing'}
       </span>
 
-      <span class="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-semibold text-white transition group-hover:bg-slate-700">
+      <span
+        aria-hidden="true"
+        class="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-semibold text-white transition group-hover:bg-slate-700"
+      >
         View listing
         <Fragment set:html={svg('arrow', 'h-3.5 w-3.5')} />
       </span>

@@ -19,7 +19,7 @@ export default defineConfig({
     sanity({
       projectId: PUBLIC_SANITY_PROJECT_ID,
       dataset: PUBLIC_SANITY_DATASET,
-      apiVersion: PUBLIC_SANITY_API_VERSION,
+      apiVersion: PUBLIC_SANITY_API_VERSION ?? '2024-01-01',
       useCdn: false,
       // Sanity Studio is embedded at this route
       studioBasePath: '/studio',

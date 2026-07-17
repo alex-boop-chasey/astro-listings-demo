@@ -3,6 +3,7 @@ import '../../styles/global.css';
 import { client } from '../../sanity/lib/client';
 import { urlFor } from '../../sanity/lib/image';
 import ListingCard from '../../components/ListingCard.astro';
+import ContactModal from '../../components/ContactModal.astro';
 import { PortableText } from 'astro-portabletext';
 import {
   type Listing,
@@ -157,7 +158,10 @@ const canonicalURL = new URL(
 
             {
               listing.status === 'sold' && (
-                <div class="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-12 bg-red-600/95 px-20 py-2 text-center text-xl font-extrabold uppercase tracking-[0.3em] text-white shadow-lg">
+                <div
+                  aria-hidden="true"
+                  class="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-12 bg-red-600/95 px-20 py-2 text-center text-xl font-extrabold uppercase tracking-[0.3em] text-white shadow-lg"
+                >
                   Sold
                 </div>
               )
@@ -219,6 +223,7 @@ const canonicalURL = new URL(
                 id="save-btn"
                 type="button"
                 data-id={listing._id}
+                aria-pressed="false"
                 class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
               >
                 <span id="save-icon" class="inline-flex"><Fragment set:html={iconSvg('heart', 'h-4 w-4')} /></span>
@@ -291,35 +296,14 @@ const canonicalURL = new URL(
       <!-- Footer -->
       <footer class="mt-24 border-t border-slate-200 py-8 text-center text-sm text-slate-500">
         Built with Astro, Tailwind and Sanity ·
-        <a href={REPO} target="_blank" rel="noopener" class="underline transition hover:text-slate-900">
+        <a href={REPO} target="_blank" rel="noopener noreferrer" class="underline transition hover:text-slate-900">
           View on GitHub
         </a>
       </footer>
     </div>
 
-    <!-- Contact Seller demo modal -->
-    <div id="contact-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
-      <div id="modal-backdrop" class="absolute inset-0 bg-slate-900/50"></div>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-title"
-        class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
-      >
-        <h2 id="modal-title" class="text-xl font-bold text-slate-900">This is a demo</h2>
-        <p class="mt-3 text-slate-600">
-          In a real deployment, this button would open the seller's contact form or reveal their
-          phone/email. Wire it up however your listing site needs.
-        </p>
-        <button
-          id="modal-close"
-          type="button"
-          class="mt-6 w-full rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white transition hover:bg-slate-700"
-        >
-          Close
-        </button>
-      </div>
-    </div>
+    <!-- Contact Seller demo modal (self-contained, wired to #contact-btn) -->
+    <ContactModal />
 
     <script>
       import { icons } from '../../lib/listing';
@@ -357,6 +341,7 @@ const canonicalURL = new URL(
         saveIcon.innerHTML = saved ? filledHeart : outlineHeart;
         saveLabel.textContent = saved ? 'Saved' : 'Save Listing';
         saveBtn.classList.toggle('bg-slate-100', saved);
+        saveBtn.setAttribute('aria-pressed', String(saved));
       }
 
       saveBtn?.addEventListener('click', () => {
@@ -373,57 +358,6 @@ const canonicalURL = new URL(
         renderSaved();
       });
       renderSaved();
-
-      // --- Contact Seller modal (focus-trapped) ----------------------------
-      const modal = document.getElementById('contact-modal');
-      const contactBtn = document.getElementById('contact-btn');
-      const modalClose = document.getElementById('modal-close');
-      const modalBackdrop = document.getElementById('modal-backdrop');
-      let lastFocused: HTMLElement | null = null;
-
-      function onKeydown(e: KeyboardEvent) {
-        if (!modal) return;
-        if (e.key === 'Escape') {
-          closeModal();
-          return;
-        }
-        if (e.key === 'Tab') {
-          const focusables = modal.querySelectorAll<HTMLElement>(
-            'button, [href], input, [tabindex]:not([tabindex="-1"])',
-          );
-          if (focusables.length === 0) return;
-          const first = focusables[0];
-          const last = focusables[focusables.length - 1];
-          if (e.shiftKey && document.activeElement === first) {
-            e.preventDefault();
-            last.focus();
-          } else if (!e.shiftKey && document.activeElement === last) {
-            e.preventDefault();
-            first.focus();
-          }
-        }
-      }
-
-      function openModal() {
-        if (!modal) return;
-        lastFocused = document.activeElement as HTMLElement;
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        modalClose?.focus();
-        document.addEventListener('keydown', onKeydown);
-      }
-
-      function closeModal() {
-        if (!modal) return;
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        document.removeEventListener('keydown', onKeydown);
-        lastFocused?.focus();
-      }
-
-      contactBtn?.addEventListener('click', openModal);
-      modalClose?.addEventListener('click', closeModal);
-      modalBackdrop?.addEventListener('click', closeModal);
     </script>
   </body>
 </html>
