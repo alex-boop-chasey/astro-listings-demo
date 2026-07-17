@@ -54,6 +54,19 @@ const priceLabel = formatPrice(listing.price, listing.currency);
 const details = listing.details ?? [];
 
 const REPO = 'https://github.com/alex-boop-chasey/astro-listings-demo';
+
+// Derive the social description from the first Portable Text paragraph.
+const firstBlockText = Array.isArray(listing.description)
+  ? (() => {
+      const block = listing.description.find((b: any) => b?._type === 'block') as any;
+      return block ? (block.children ?? []).map((c: any) => c?.text ?? '').join('').trim() : '';
+    })()
+  : '';
+const metaDescription = firstBlockText || `${listing.title} — ${categoryName} listing.`;
+const canonicalURL = new URL(
+  Astro.url.pathname,
+  Astro.site ?? 'https://astro-listings-demo.pages.dev',
+).href;
 ---
 
 <html lang="en">
@@ -62,9 +75,30 @@ const REPO = 'https://github.com/alex-boop-chasey/astro-listings-demo';
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{listing.title} · astro-listings</title>
-    <meta name="description" content={`${listing.title} — ${categoryName} listing.`} />
+    <meta name="description" content={metaDescription} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content={listing.title} />
+    <meta property="og:description" content={metaDescription} />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content={canonicalURL} />
+    <!-- TODO: add <meta property="og:image"> once the demo is deployed and an OG image is hosted.
+         Required for social previews — summary_large_image cards render blank without it. -->
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={listing.title} />
+    <meta name="twitter:description" content={metaDescription} />
   </head>
   <body class="min-h-screen bg-slate-50 text-slate-800 antialiased text-[15px] leading-relaxed">
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-slate-900 focus:px-4 focus:py-2 focus:text-white"
+    >
+      Skip to content
+    </a>
+
     <!-- Sticky nav -->
     <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur">
       <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
@@ -82,6 +116,7 @@ const REPO = 'https://github.com/alex-boop-chasey/astro-listings-demo';
     </header>
 
     <div class="mx-auto max-w-7xl px-6">
+      <main id="main-content" tabindex="-1">
       <!-- Breadcrumb -->
       <nav class="py-6 text-sm text-slate-500" aria-label="Breadcrumb">
         <a href="/" class="transition hover:text-slate-900">Home</a>
@@ -174,17 +209,20 @@ const REPO = 'https://github.com/alex-boop-chasey/astro-listings-demo';
 
             <div class="mt-6 flex flex-col gap-3">
               <button
+                id="contact-btn"
                 type="button"
                 class="w-full rounded-xl bg-slate-900 px-5 py-3 text-center font-semibold text-white transition hover:bg-slate-700"
               >
                 Contact Seller
               </button>
               <button
+                id="save-btn"
                 type="button"
+                data-id={listing._id}
                 class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
               >
-                <Fragment set:html={iconSvg('heart', 'h-4 w-4')} />
-                Save Listing
+                <span id="save-icon" class="inline-flex"><Fragment set:html={iconSvg('heart', 'h-4 w-4')} /></span>
+                <span id="save-label">Save Listing</span>
               </button>
             </div>
           </div>
@@ -224,7 +262,7 @@ const REPO = 'https://github.com/alex-boop-chasey/astro-listings-demo';
 
       <!-- Description -->
       {
-        listing.description && (
+        Array.isArray(listing.description) && listing.description.length > 0 && (
           <section class="border-t border-slate-200 py-16">
             <h2 class="text-xl font-bold text-slate-900">Description</h2>
             <div class="prose prose-slate mt-4 max-w-2xl">
@@ -248,6 +286,8 @@ const REPO = 'https://github.com/alex-boop-chasey/astro-listings-demo';
         )
       }
 
+      </main>
+
       <!-- Footer -->
       <footer class="mt-24 border-t border-slate-200 py-8 text-center text-sm text-slate-500">
         Built with Astro, Tailwind and Sanity ·
@@ -257,13 +297,133 @@ const REPO = 'https://github.com/alex-boop-chasey/astro-listings-demo';
       </footer>
     </div>
 
+    <!-- Contact Seller demo modal -->
+    <div id="contact-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div id="modal-backdrop" class="absolute inset-0 bg-slate-900/50"></div>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+        class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+      >
+        <h2 id="modal-title" class="text-xl font-bold text-slate-900">This is a demo</h2>
+        <p class="mt-3 text-slate-600">
+          In a real deployment, this button would open the seller's contact form or reveal their
+          phone/email. Wire it up however your listing site needs.
+        </p>
+        <button
+          id="modal-close"
+          type="button"
+          class="mt-6 w-full rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white transition hover:bg-slate-700"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+
     <script>
+      import { icons } from '../../lib/listing';
+
+      // --- Gallery thumbnail switching -------------------------------------
       const main = document.getElementById('main-image') as HTMLImageElement | null;
       document.querySelectorAll<HTMLElement>('[data-full]').forEach((thumb) => {
         thumb.addEventListener('click', () => {
           if (main && thumb.dataset.full) main.src = thumb.dataset.full;
         });
       });
+
+      // --- Save Listing (persisted in localStorage) ------------------------
+      const SAVED_KEY = 'astro-listings-saved';
+      const saveBtn = document.getElementById('save-btn');
+      const saveIcon = document.getElementById('save-icon');
+      const saveLabel = document.getElementById('save-label');
+      const listingId = saveBtn?.dataset.id;
+
+      const filledHeart = `<svg class="h-4 w-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">${icons.heart}</svg>`;
+      const outlineHeart = `<svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons.heart}</svg>`;
+
+      function getSaved(): string[] {
+        try {
+          const raw = localStorage.getItem(SAVED_KEY);
+          return raw ? JSON.parse(raw) : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function renderSaved() {
+        if (!saveBtn || !saveIcon || !saveLabel || !listingId) return;
+        const saved = getSaved().includes(listingId);
+        saveIcon.innerHTML = saved ? filledHeart : outlineHeart;
+        saveLabel.textContent = saved ? 'Saved' : 'Save Listing';
+        saveBtn.classList.toggle('bg-slate-100', saved);
+      }
+
+      saveBtn?.addEventListener('click', () => {
+        if (!listingId) return;
+        try {
+          const list = getSaved();
+          const idx = list.indexOf(listingId);
+          if (idx >= 0) list.splice(idx, 1);
+          else list.push(listingId);
+          localStorage.setItem(SAVED_KEY, JSON.stringify(list));
+        } catch {
+          /* localStorage unavailable — no-op */
+        }
+        renderSaved();
+      });
+      renderSaved();
+
+      // --- Contact Seller modal (focus-trapped) ----------------------------
+      const modal = document.getElementById('contact-modal');
+      const contactBtn = document.getElementById('contact-btn');
+      const modalClose = document.getElementById('modal-close');
+      const modalBackdrop = document.getElementById('modal-backdrop');
+      let lastFocused: HTMLElement | null = null;
+
+      function onKeydown(e: KeyboardEvent) {
+        if (!modal) return;
+        if (e.key === 'Escape') {
+          closeModal();
+          return;
+        }
+        if (e.key === 'Tab') {
+          const focusables = modal.querySelectorAll<HTMLElement>(
+            'button, [href], input, [tabindex]:not([tabindex="-1"])',
+          );
+          if (focusables.length === 0) return;
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+
+      function openModal() {
+        if (!modal) return;
+        lastFocused = document.activeElement as HTMLElement;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        modalClose?.focus();
+        document.addEventListener('keydown', onKeydown);
+      }
+
+      function closeModal() {
+        if (!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.removeEventListener('keydown', onKeydown);
+        lastFocused?.focus();
+      }
+
+      contactBtn?.addEventListener('click', openModal);
+      modalClose?.addEventListener('click', closeModal);
+      modalBackdrop?.addEventListener('click', closeModal);
     </script>
   </body>
 </html>

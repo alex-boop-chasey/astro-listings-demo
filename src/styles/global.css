@@ -1,2 +1,12 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+
+/* Guarantee a visible focus ring on every interactive element site-wide.
+   :where() keeps specificity at 0 so component styles can still override. */
+@layer base {
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid #0f172a;
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+}

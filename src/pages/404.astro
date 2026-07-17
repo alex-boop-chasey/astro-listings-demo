@@ -1,0 +1,82 @@
+---
+import '../styles/global.css';
+
+const REPO = 'https://github.com/alex-boop-chasey/astro-listings-demo';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Page not found · astro-listings</title>
+    <meta name="robots" content="noindex" />
+  </head>
+  <body class="min-h-screen bg-slate-50 text-slate-800 antialiased text-[15px] leading-relaxed">
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-slate-900 focus:px-4 focus:py-2 focus:text-white"
+    >
+      Skip to content
+    </a>
+
+    <div class="mx-auto max-w-7xl px-6">
+      <!-- Header -->
+      <header class="flex items-center justify-between py-6">
+        <a href="/" class="text-base font-semibold tracking-tight text-slate-900">
+          astro<span class="text-slate-400">-listings</span>
+        </a>
+        <nav class="flex items-center gap-6 text-sm">
+          <a
+            href={REPO}
+            target="_blank"
+            rel="noopener"
+            class="text-slate-500 transition hover:text-slate-900"
+          >
+            GitHub
+          </a>
+          <a
+            href="#"
+            aria-disabled="true"
+            title="Coming soon"
+            class="text-slate-400 transition hover:text-slate-600"
+          >
+            npm
+          </a>
+        </nav>
+      </header>
+
+      <main id="main-content" tabindex="-1">
+        <section class="mx-auto max-w-2xl py-24 text-center md:py-32">
+          <span
+            class="inline-flex items-center gap-1.5 rounded-full bg-slate-900/5 px-3 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-900/10"
+          >
+            <span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
+            404
+          </span>
+          <h1 class="mt-6 text-4xl font-bold tracking-tight text-slate-900 md:text-5xl">
+            This listing has moved on.
+          </h1>
+          <p class="mx-auto mt-5 max-w-xl text-lg text-slate-600">
+            The page you're looking for isn't here — it may have been sold, removed, or never
+            existed.
+          </p>
+          <a
+            href="/"
+            class="mt-8 inline-block rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white transition hover:bg-slate-700"
+          >
+            Browse all listings
+          </a>
+        </section>
+      </main>
+
+      <!-- Footer -->
+      <footer class="mt-24 border-t border-slate-200 py-8 text-center text-sm text-slate-500">
+        Built with Astro, Tailwind and Sanity ·
+        <a href={REPO} target="_blank" rel="noopener" class="underline transition hover:text-slate-900">
+          View on GitHub
+        </a>
+      </footer>
+    </div>
+  </body>
+</html>
