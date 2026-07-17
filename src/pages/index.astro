@@ -1,17 +1,178 @@
 ---
+import '../styles/global.css';
+import { client } from '../sanity/lib/client';
+import ListingCard, { type Listing } from '../components/ListingCard.astro';
 
+const listings = await client.fetch<Listing[]>(
+  `*[_type == "listing"]{
+    _id, title, slug, description, price, currency, status, images, category,
+    details[]{ _key, label, value, valueType, valueNumber, unit, valueBoolean, valueDate },
+    listingDate
+  } | order(listingDate desc)`,
+);
+
+const REPO = 'https://github.com/alex-boop-chasey/astro-listings-demo';
 ---
 
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>astro-listings — a drop-in listings component for Astro</title>
+    <meta
+      name="description"
+      content="A drop-in listings component for Astro, powered by Sanity CMS. One component adapts to any listing vertical — cars, real estate, gear, jobs."
+    />
+  </head>
+  <body class="min-h-screen bg-slate-50 text-slate-800 antialiased text-[15px] leading-relaxed">
+    <div class="mx-auto max-w-7xl px-6">
+      <!-- Header -->
+      <header class="flex items-center justify-between py-6">
+        <a href="/" class="text-base font-semibold tracking-tight text-slate-900">
+          astro<span class="text-slate-400">-listings</span>
+        </a>
+        <nav class="flex items-center gap-6 text-sm">
+          <a
+            href={REPO}
+            target="_blank"
+            rel="noopener"
+            class="text-slate-500 transition hover:text-slate-900"
+          >
+            GitHub
+          </a>
+          <a
+            href="#"
+            aria-disabled="true"
+            title="Coming soon"
+            class="text-slate-400 transition hover:text-slate-600"
+          >
+            npm
+          </a>
+        </nav>
+      </header>
+
+      <!-- Hero -->
+      <section class="mx-auto max-w-3xl py-16 text-center md:py-24">
+        <span
+          class="inline-flex items-center gap-1.5 rounded-full bg-slate-900/5 px-3 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-900/10"
+        >
+          <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          Live demo
+        </span>
+        <h1 class="mt-6 text-4xl font-bold tracking-tight text-slate-900 md:text-6xl">
+          One component. Any vertical.
+        </h1>
+        <p class="mx-auto mt-5 max-w-2xl text-lg text-slate-600">
+          Cars, real estate, gear, jobs — the same component adapts to any listing type
+          through Sanity's flexible schema.
+        </p>
+      </section>
+
+      <!-- Vertical toggle -->
+      <div class="flex justify-center">
+        <div
+          role="group"
+          aria-label="Filter listings by category"
+          class="inline-flex rounded-full bg-white p-1 text-sm font-medium shadow-sm ring-1 ring-slate-200"
+        >
+          <button
+            type="button"
+            data-filter="all"
+            aria-pressed="true"
+            class="rounded-full bg-slate-900 px-4 py-2 text-white transition"
+          >
+            All
+          </button>
+          <button
+            type="button"
+            data-filter="automotive"
+            aria-pressed="false"
+            class="rounded-full px-4 py-2 text-slate-600 transition hover:text-slate-900"
+          >
+            🚗 Automotive
+          </button>
+          <button
+            type="button"
+            data-filter="real-estate"
+            aria-pressed="false"
+            class="rounded-full px-4 py-2 text-slate-600 transition hover:text-slate-900"
+          >
+            🏡 Real Estate
+          </button>
+        </div>
+      </div>
+
+      <!-- Listings grid -->
+      <section class="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          listings.map((listing) => (
+            <div class="listing-item" data-category={listing.category}>
+              <ListingCard listing={listing} />
+            </div>
+          ))
+        }
+      </section>
+
+      <!-- Footer -->
+      <footer class="mt-24 border-t border-slate-200 py-8 text-center text-sm text-slate-500">
+        Built with Astro, Tailwind and Sanity ·
+        <a href={REPO} target="_blank" rel="noopener" class="underline transition hover:text-slate-900">
+          View on GitHub
+        </a>
+      </footer>
+    </div>
+
+    <style>
+      .listing-item {
+        transition:
+          opacity 0.3s ease,
+          transform 0.3s ease;
+      }
+      .listing-item.is-hidden {
+        opacity: 0;
+        transform: scale(0.97);
+      }
+    </style>
+
+    <script>
+      const buttons = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
+      const items = document.querySelectorAll<HTMLElement>('.listing-item');
+      let current = 'all';
+
+      function apply(filter: string) {
+        current = filter;
+
+        buttons.forEach((b) => {
+          const active = b.dataset.filter === filter;
+          // These Tailwind classes render statically on the initial buttons
+          // (active + inactive), so the scanner already emits them into the bundle.
+          b.classList.toggle('bg-slate-900', active);
+          b.classList.toggle('text-white', active);
+          b.classList.toggle('text-slate-600', !active);
+          // Only inactive buttons get the hover-darken; otherwise hovering the
+          // active (dark) tab would turn its white label slate-900 → invisible.
+          b.classList.toggle('hover:text-slate-900', !active);
+          b.setAttribute('aria-pressed', String(active));
+        });
+
+        items.forEach((item) => {
+          const match = filter === 'all' || item.dataset.category === filter;
+          if (match) {
+            item.style.display = '';
+            requestAnimationFrame(() => item.classList.remove('is-hidden'));
+          } else {
+            item.classList.add('is-hidden');
+            setTimeout(() => {
+              if (current !== 'all' && item.dataset.category !== current) {
+                item.style.display = 'none';
+              }
+            }, 300);
+          }
+        });
+      }
+
+      buttons.forEach((b) => b.addEventListener('click', () => apply(b.dataset.filter ?? 'all')));
+    </script>
+  </body>
 </html>
